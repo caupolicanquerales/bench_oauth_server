@@ -42,7 +42,8 @@ spring:
   datasource:
     # Set these in Render Dashboard -> Environment Variables:
     # SPRING_DATASOURCE_URL, DB_USER, DB_PASSWORD
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://dbbenchauth_user:gGzvIUNPR2gy7QGTvC4vHUIBSl40AP8i@dpg-dak3ev142hec73bsfij0-a/dbbenchauth}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://dpg-dak3ev142hec73bsfij0-a/dbbenchauth}
     username: ${DB_USER:dbbenchauth_user}
     password: ${DB_PASSWORD:gGzvIUNPR2gy7QGTvC4vHUIBSl40AP8i}
     driver-class-name: org.postgresql.Driver
+
