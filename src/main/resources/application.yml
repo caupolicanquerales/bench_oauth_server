@@ -1,0 +1,19 @@
+server:
+  port: ${PORT:8083} # Render injects\)PORT; defaults to 8030 locally
+
+spring:
+  application:
+    name: bench_oauth_server
+  datasource:
+    # Render provides SPRING_DATASOURCE_URL in JDBC format, or uses local fallback
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/benchauthDB}
+    username: ${DB_USER:admin}
+    password: ${DB_PASSWORD:secretpassword}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update # Automatically creates user & OAuth tables on startup
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
