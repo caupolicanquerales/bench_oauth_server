@@ -1,15 +1,11 @@
 server:
-  port: ${PORT:8083} # Render injects\)PORT; defaults to 8030 locally
+  port: 8083
 
 spring:
   application:
     name: bench_oauth_server
-  datasource:
-    # Render provides SPRING_DATASOURCE_URL in JDBC format, or uses local fallback
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/benchauthDB}
-    username: ${DB_USER:admin}
-    password: ${DB_PASSWORD:secretpassword}
-    driver-class-name: org.postgresql.Driver
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
 
   jpa:
     hibernate:
@@ -17,3 +13,36 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+---
+# ------------------------------------------------------------------
+# Local Environment Profile
+# ------------------------------------------------------------------
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/benchauthDB}
+    username: ${DB_USER:admin}
+    password: ${DB_PASSWORD:secretpassword}
+    driver-class-name: org.postgresql.Driver
+
+---
+# ------------------------------------------------------------------
+# Cloud / Render Environment Profile
+# ------------------------------------------------------------------
+server:
+  port: ${PORT:8083} # Render injects PORT dynamically
+
+spring:
+  config:
+    activate:
+      on-profile: render
+  datasource:
+    # Set these in Render Dashboard -> Environment Variables:
+    # SPRING_DATASOURCE_URL, DB_USER, DB_PASSWORD
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://dbbenchauth_user:gGzvIUNPR2gy7QGTvC4vHUIBSl40AP8i@dpg-dak3ev142hec73bsfij0-a/dbbenchauth}
+    username: ${DB_USER:dbbenchauth_user}
+    password: ${DB_PASSWORD:gGzvIUNPR2gy7QGTvC4vHUIBSl40AP8i}
+    driver-class-name: org.postgresql.Driver
