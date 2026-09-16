@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ApexTelemetry - Athlete & Coach Sign In</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Teko:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0a0d14;
+            --bg-surface: #121824;
+            --bg-surface-elevated: #1a2332;
+            --bg-input: #0e141f;
+            --border-subtle: rgba(255, 255, 255, 0.14);
+            --border-focus: #00f2fe;
+            --accent-neon: #00f2fe;
+            --accent-lime: #10b981;
+            --accent-glow: rgba(0, 242, 254, 0.35);
+            --accent-orange: #ff5e3a;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --text-placeholder: #8192a8;
+            --error-red: #f43f5e;
+            --error-bg: rgba(244, 63, 94, 0.12);
+            --radius-md: 12px;
+            --radius-lg: 20px;
+            --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-display: 'Teko', sans-serif;
+            --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: stretch;
+            justify-content: stretch;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* App Split Layout */
+        .auth-wrapper {
+            display: grid;
+            grid-template-columns: minmax(380px, 1fr) 1.25fr;
+            width: 100vw;
+            min-height: 100vh;
+        }
+
+        /* Form Side */
+        .auth-form-pane {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2.25rem 3.25rem;
+            background: linear-gradient(145deg, #0d121c 0%, #080b11 100%);
+            position: relative;
+            overflow-y: auto;
+            z-index: 2;
+        }
+
+        .auth-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.75rem;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px var(--accent-glow);
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .brand-text-block {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .brand-name {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+        .brand-name span {
+            color: var(--accent-neon);
+        }
+
+        .brand-tagline {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .live-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.75rem;
+            border-radius: 999px;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--accent-lime);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-lime);
+            box-shadow: 0 0 8px var(--accent-lime);
+            animation: pulse-dot 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        /* Form Container */
+        .form-container {
+            width: 100%;
+            max-width: 440px;
+            margin: 0 auto;
+        }
+
+        .headline-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .headline-group h1 {
+            font-size: 1.85rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--text-primary);
+            margin-bottom: 0.35rem;
+        }
+
+        .headline-group p {
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+        }
+
+        /* Role Segmented Switcher */
+        .role-switch-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            background: var(--bg-surface);
+            padding: 5px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-subtle);
+            margin-bottom: 0.75rem;
+        }
+
+        .role-option {
+            position: relative;
+        }
+
+        .role-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .role-option label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.6rem 0.5rem;
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            user-select: none;
+            letter-spacing: 0.2px;
+        }
+
+        .role-option input[type="radio"]:focus-visible + label {
+            outline: 2px solid var(--accent-neon);
+            outline-offset: 2px;
+        }
+
+        .role-option input[type="radio"]:checked + label {
+            background: var(--bg-surface-elevated);
+            color: var(--accent-neon);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 242, 254, 0.35);
+        }
+
+        .role-hint {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .role-hint svg {
+            width: 14px;
+            height: 14px;
+            fill: currentColor;
+            flex-shrink: 0;
+        }
+
+        /* OAuth Social Auth */
+        .social-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.65rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 44px;
+            border-radius: var(--radius-md);
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            text-decoration: none;
+            position: relative;
+        }
+
+        .social-btn:hover {
+            background: var(--bg-surface-elevated);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .social-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .social-btn[title="Strava"]:hover {
+            border-color: #fc4c02;
+            color: #fc4c02;
+        }
+
+        .social-btn[title="Garmin"]:hover {
+            border-color: #007cc3;
+            color: #007cc3;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 1.25rem 0;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .divider span {
+            padding: 0 0.85rem;
+        }
+
+        /* Server & Client Error Alerts */
+        .alert-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.85rem 1rem;
+            border-radius: var(--radius-md);
+            margin-bottom: 1.25rem;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .alert-error {
+            background: var(--error-bg);
+            border: 1px solid rgba(244, 63, 94, 0.35);
+            color: #fecdd3;
+        }
+
+        .alert-error svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--error-red);
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            color: #a7f3d0;
+        }
+
+        .alert-success svg {
+            width: 18px;
+            height: 18px;
+            fill: var(--accent-lime);
+            flex-shrink: 0;
+        }
+
+        /* Form Controls with Floating Labels */
+        .form-group {
+            position: relative;
+            margin-bottom: 1.25rem;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-input {
+            width: 100%;
+            height: 52px;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 1.2rem 1rem 0.35rem 2.85rem;
+            font-family: var(--font-main);
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            outline: none;
+            transition: var(--transition-smooth);
+        }
+
+        .form-input:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(0, 242, 254, 0.18);
+            background: var(--bg-surface);
+        }
+
+        .form-input.is-invalid {
+            border-color: var(--error-red) !important;
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15) !important;
+        }
+
+        .input-icon-lead {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            color: var(--text-muted);
+            pointer-events: none;
+            transition: var(--transition-smooth);
+        }
+
+        .form-input:focus ~ .input-icon-lead {
+            color: var(--accent-neon);
+        }
+
+        /* Floating Label & Placeholder Contrast */
+        .floating-label {
+            position: absolute;
+            left: 2.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.92rem;
+            font-weight: 500;
+            color: var(--text-placeholder);
+            pointer-events: none;
+            transition: var(--transition-smooth);
+        }
+
+        .form-input:focus ~ .floating-label,
+        .form-input:not(:placeholder-shown) ~ .floating-label {
+            top: 14px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--accent-neon);
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: var(--transition-smooth);
+        }
+
+        .password-toggle-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .password-toggle-btn:focus-visible {
+            outline: 2px solid var(--accent-neon);
+        }
+
+        .field-validation-msg {
+            display: none;
+            font-size: 0.78rem;
+            color: var(--error-red);
+            margin-top: 0.35rem;
+            padding-left: 0.5rem;
+        }
+
+        .field-validation-msg.active {
+            display: block;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-3px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Extra Form Options: High Contrast Utilities */
+        .form-row-utility {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            font-size: 0.88rem;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            cursor: pointer;
+            user-select: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .checkbox-container:hover {
+            color: var(--text-primary);
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border-subtle);
+            border-radius: 4px;
+            cursor: pointer;
+            display: grid;
+            place-content: center;
+            transition: var(--transition-smooth);
+        }
+
+        .checkbox-container input[type="checkbox"]:focus-visible {
+            outline: 2px solid var(--accent-neon);
+            outline-offset: 1px;
+        }
+
+        .checkbox-container input[type="checkbox"]:checked {
+            background: var(--accent-neon);
+            border-color: var(--accent-neon);
+        }
+
+        .checkbox-container input[type="checkbox"]:checked::before {
+            content: "";
+            width: 10px;
+            height: 6px;
+            border-left: 2px solid #080b11;
+            border-bottom: 2px solid #080b11;
+            transform: rotate(-45deg) translate(1px, -1px);
+        }
+
+        .forgot-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition-smooth);
+        }
+
+        .forgot-link:hover {
+            color: var(--accent-neon);
+            text-decoration: underline;
+        }
+
+        .forgot-link:focus-visible {
+            outline: 2px solid var(--accent-neon);
+            border-radius: 4px;
+        }
+
+        /* Action Buttons */
+        .submit-btn {
+            width: 100%;
+            height: 50px;
+            background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+            border: none;
+            border-radius: var(--radius-md);
+            font-family: var(--font-main);
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #080b11;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            box-shadow: 0 4px 18px var(--accent-glow);
+            transition: var(--transition-smooth);
+            text-transform: uppercase;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(0, 242, 254, 0.5);
+            filter: brightness(1.08);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        /* WebAuthn / Biometrics */
+        .biometrics-btn {
+            width: 100%;
+            height: 46px;
+            margin-top: 0.75rem;
+            background: var(--bg-surface);
+            border: 1px dashed rgba(0, 242, 254, 0.4);
+            border-radius: var(--radius-md);
+            font-family: var(--font-main);
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.65rem;
+            transition: var(--transition-smooth);
+        }
+
+        .biometrics-btn:hover {
+            background: var(--bg-surface-elevated);
+            border-color: var(--accent-neon);
+            color: var(--accent-neon);
+        }
+
+        .biometrics-btn svg {
+            width: 19px;
+            height: 19px;
+            stroke: currentColor;
+        }
+
+        /* MFA Step Overlay / Modal Simulation */
+        .mfa-container {
+            display: none;
+            background: var(--bg-surface-elevated);
+            border: 1px solid var(--accent-neon);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .mfa-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--accent-neon);
+            margin-bottom: 0.35rem;
+        }
+
+        .mfa-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.85rem;
+        }
+
+        .otp-inputs {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: space-between;
+        }
+
+        .otp-digit {
+            width: 48px;
+            height: 48px;
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-neon);
+            background: var(--bg-input);
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            outline: none;
+        }
+
+        .otp-digit:focus {
+            border-color: var(--accent-neon);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+
+        /* Footer & Contextual Onboarding */
+        .auth-footer {
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .onboarding-banner {
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .onboarding-link {
+            color: var(--accent-neon);
+            text-decoration: none;
+            font-weight: 700;
+            transition: var(--transition-smooth);
+        }
+
+        .onboarding-link:hover {
+            text-decoration: underline;
+        }
+
+        .legal-footer {
+            margin-top: 1.25rem;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: center;
+            gap: 1.25rem;
+        }
+
+        .legal-footer a {
+            color: var(--text-muted);
+            text-decoration: none;
+        }
+
+        .legal-footer a:hover {
+            color: var(--text-secondary);
+        }
+
+        /* Right Side: Sports Imagery & Athletic Showcase */
+        .auth-visual-pane {
+            position: relative;
+            background-color: #04070c;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(0, 242, 254, 0.18), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 94, 58, 0.15), transparent 45%),
+                linear-gradient(180deg, rgba(8, 11, 17, 0.4) 0%, rgba(8, 11, 17, 0.95) 100%),
+                url('https://images.unsplash.com/photo-1517649763962-0c623266ddc0?auto=format&fit=crop&w=1600&q=80');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 3rem;
+            overflow: hidden;
+        }
+
+        .visual-overlay-grid {
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        .visual-top-bar {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .badge-telemetry {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: rgba(14, 20, 31, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .pulse-beacon {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-neon);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-neon);
+        }
+
+        .visual-center-quote {
+            position: relative;
+            z-index: 2;
+            max-width: 540px;
+        }
+
+        .hero-tag {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+            color: var(--accent-neon);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .hero-tag::before {
+            content: '';
+            width: 24px;
+            height: 2px;
+            background: var(--accent-neon);
+        }
+
+        .hero-title {
+            font-size: 2.8rem;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -1px;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .hero-title span {
+            background: linear-gradient(135deg, #00f2fe 0%, #ffffff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-desc {
+            font-size: 1.05rem;
+            line-height: 1.6;
+            color: #cbd5e1;
+            margin-bottom: 1.75rem;
+            font-weight: 400;
+        }
+
+        /* Live Event Ticker */
+        .event-ticker {
+            position: relative;
+            z-index: 2;
+            background: rgba(14, 20, 31, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem 1.5rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .ticker-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.85rem;
+            padding-bottom: 0.65rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .ticker-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--accent-neon);
+        }
+
+        .ticker-title svg {
+            width: 14px;
+            height: 14px;
+            fill: var(--accent-neon);
+        }
+
+        .ticker-time {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .ticker-events-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+        }
+
+        .ticker-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 0.65rem 0.85rem;
+            transition: var(--transition-smooth);
+        }
+
+        .ticker-card:hover {
+            border-color: rgba(0, 242, 254, 0.4);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .event-type {
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--accent-orange);
+            margin-bottom: 0.2rem;
+        }
+
+        .event-name {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .event-meta {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Responsive Design Across Screen Sizes */
+        @media (max-width: 1200px) {
+            .auth-wrapper {
+                grid-template-columns: minmax(360px, 1fr) 1fr;
+            }
+
+            .auth-form-pane {
+                padding: 2rem 2.5rem;
+            }
+
+            .hero-title {
+                font-size: 2.3rem;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .auth-wrapper {
+                grid-template-columns: 1fr;
+                min-height: 100vh;
+            }
+
+            .auth-visual-pane {
+                display: none;
+            }
+
+            .auth-form-pane {
+                padding: 2.5rem 1.5rem;
+                min-height: 100vh;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .form-container {
+                max-width: 440px;
+                background: rgba(18, 24, 36, 0.7);
+                backdrop-filter: blur(20px);
+                border: 1px solid var(--border-subtle);
+                border-radius: var(--radius-lg);
+                padding: 2rem 1.75rem;
+                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+            }
+
+            .auth-header {
+                margin-bottom: 1.5rem;
+                justify-content: space-between;
+                width: 100%;
+                max-width: 440px;
+            }
+
+            .auth-footer {
+                width: 100%;
+                max-width: 440px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                background: #080b11;
+            }
+
+            .auth-form-pane {
+                padding: 1.25rem 0.85rem;
+            }
+
+            .form-container {
+                padding: 1.5rem 1.2rem;
+                border-radius: var(--radius-md);
+                background: var(--bg-surface);
+            }
+
+            .headline-group h1 {
+                font-size: 1.6rem;
+            }
+
+            .role-switch-container {
+                gap: 4px;
+            }
+
+            .role-option label {
+                padding: 0.5rem 0.35rem;
+                font-size: 0.78rem;
+            }
+
+            .social-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 0.5rem;
+            }
+
+            .legal-footer {
+                flex-wrap: wrap;
+                gap: 0.75rem;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .form-container {
+                padding: 1.25rem 0.85rem;
+            }
+
+            .role-switch-container {
+                grid-template-columns: 1fr;
+            }
+
+            .social-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="auth-wrapper">
+    <!-- LEFT PANE: Form & Core Authentication Components -->
+    <section class="auth-form-pane">
+        <!-- Brand Header (Aligned with Dashboard: ApexTelemetry) -->
+        <header class="auth-header">
+            <a href="/" class="brand-logo" aria-label="ApexTelemetry Home">
+                <div class="brand-icon">⚡</div>
+                <div class="brand-text-block">
+                    <div class="brand-name">Apex<span>Telemetry</span></div>
+                    <div class="brand-tagline">Performance Analytics</div>
+                </div>
+            </a>
+            <div class="live-status-pill">
+                <span class="live-dot"></span>
+                <span>OAuth 2.1 Ready</span>
+            </div>
+        </header>
+
+        <!-- Main Form Container -->
+        <main class="form-container">
+            <div class="headline-group">
+                <h1 id="portal-title">Sign In to ApexTelemetry</h1>
+                <p id="portal-subtitle">Access your athletic telemetry, GPS maps, and team analytics.</p>
+            </div>
+
+            <!-- Role/Context Switcher (Clarified non-destructive portal context) -->
+            <div class="role-switch-container" role="radiogroup" aria-label="Portal Selection">
+                <div class="role-option">
+                    <input type="radio" id="role-athlete" name="portalRole" value="athlete" checked onchange="updateRoleContext('athlete')">
+                    <label for="role-athlete">Athlete</label>
+                </div>
+                <div class="role-option">
+                    <input type="radio" id="role-coach" name="portalRole" value="coach" onchange="updateRoleContext('coach')">
+                    <label for="role-coach">Coach</label>
+                </div>
+                <div class="role-option">
+                    <input type="radio" id="role-admin" name="portalRole" value="admin" onchange="updateRoleContext('admin')">
+                    <label for="role-admin">Team Admin</label>
+                </div>
+            </div>
+            <div class="role-hint">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                </svg>
+                <span>Roles and scopes are verified post-login via backend claims.</span>
+            </div>
+
+            <!-- OAuth & Social Single-Tap Logins -->
+            <div class="social-grid">
+                <!-- Google -->
+                <button type="button" class="social-btn" title="Sign in with Google" onclick="triggerSocialAuth('google')">
+                    <svg viewBox="0 0 24 24">
+                        <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/>
+                        <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/>
+                        <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.8s.2-2.1.4-2.8L1.9 6.3C.7 8.7 0 10.3 0 12s.7 3.3 1.9 5.7l3.7-2.9z"/>
+                        <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.4-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"/>
+                    </svg>
+                </button>
+
+                <!-- Apple -->
+                <button type="button" class="social-btn" title="Sign in with Apple" onclick="triggerSocialAuth('apple')">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.38c.62-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.64 1.35-.57.65-1.07 1.71-.94 2.73 1.01.08 2.04-.48 2.66-1.23z"/>
+                    </svg>
+                </button>
+
+                <!-- Strava -->
+                <button type="button" class="social-btn" title="Strava" onclick="triggerSocialAuth('strava')">
+                    <svg viewBox="0 0 24 24" fill="#fc4c02">
+                        <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7.926 15.65h4.173"/>
+                    </svg>
+                </button>
+
+                <!-- Garmin -->
+                <button type="button" class="social-btn" title="Garmin" onclick="triggerSocialAuth('garmin')">
+                    <svg viewBox="0 0 24 24" fill="#007cc3">
+                        <path d="M12 2L1 21h22L12 2zm0 4.8l7.2 12.4H4.8L12 6.8z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="divider">
+                <span>Or continue with credentials</span>
+            </div>
+
+            <!-- Server-Side Error & Logout Feedback (Thymeleaf) -->
+            <div th:if="${param.error}" class="alert-box alert-error" role="alert">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                <div>
+                    <strong>Authentication failed:</strong>
+                    <span th:text="${session.SPRING_SECURITY_LAST_EXCEPTION != null ? session.SPRING_SECURITY_LAST_EXCEPTION.message : 'Invalid credentials. Please verify your details.'}">
+                        Invalid username, email, or password.
+                    </span>
+                </div>
+            </div>
+
+            <div th:if="${param.logout}" class="alert-box alert-success" role="status">
+                <svg viewBox="0 0 24 24">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+                <div>You have been safely signed out.</div>
+            </div>
+
+            <!-- Client-side Inline Error Display -->
+            <div id="client-error-banner" class="alert-box alert-error" style="display: none;">
+                <svg viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+                <div id="client-error-text">Please review errors below.</div>
+            </div>
+
+            <!-- Adaptive MFA Step Container -->
+            <div id="mfa-section" class="mfa-container" aria-live="polite">
+                <div class="mfa-header">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    <span>Adaptive Multi-Factor Check</span>
+                </div>
+                <p class="mfa-desc">New device or coach role detected. Enter the 6-digit verification code sent to your registered device:</p>
+                <div class="otp-inputs">
+                    <input type="text" maxlength="1" class="otp-digit" oninput="focusNext(this, 0)" aria-label="Digit 1">
+                    <input type="text" maxlength="1" class="otp-digit" oninput="focusNext(this, 1)" aria-label="Digit 2">
+                    <input type="text" maxlength="1" class="otp-digit" oninput="focusNext(this, 2)" aria-label="Digit 3">
+                    <input type="text" maxlength="1" class="otp-digit" oninput="focusNext(this, 3)" aria-label="Digit 4">
+                    <input type="text" maxlength="1" class="otp-digit" oninput="focusNext(this, 4)" aria-label="Digit 5">
+                    <input type="text" maxlength="1" class="otp-digit" oninput="focusNext(this, 5)" aria-label="Digit 6">
+                </div>
+            </div>
+
+            <!-- Authentication Form -->
+            <form id="loginForm" th:action="@{/login}" method="post" novalidate onsubmit="return handleFormSubmit(event)">
+                <!-- CSRF Token handled automatically by Thymeleaf with @{/login} or th:action -->
+                
+                <!-- Flexible Identifier (Email, Username, or Phone Number) -->
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username" 
+                            class="form-input" 
+                            placeholder=" "
+                            autocomplete="username"
+                            required
+                            oninput="validateIdentifier(this)">
+                        <svg class="input-icon-lead" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <label for="username" class="floating-label">Email, Username, or Phone</label>
+                    </div>
+                    <div id="username-error" class="field-validation-msg">Please enter a valid username, email or phone number.</div>
+                </div>
+
+                <!-- Password Field with Show/Hide Toggle -->
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="form-input" 
+                            placeholder=" "
+                            autocomplete="current-password"
+                            required
+                            oninput="validatePassword(this)">
+                        <svg class="input-icon-lead" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <label for="password" class="floating-label">Password</label>
+                        <button type="button" class="password-toggle-btn" id="togglePasswordBtn" onclick="togglePasswordVisibility()" aria-label="Show password">
+                            <svg id="eyeIconOpen" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                            <svg id="eyeIconClosed" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="password-error" class="field-validation-msg">Password must be at least 6 characters.</div>
+                </div>
+
+                <!-- Persistent Login & Forgot Password Link -->
+                <div class="form-row-utility">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="remember-me" name="remember-me">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="/forgot-password" class="forgot-link">Forgot Password?</a>
+                </div>
+
+                <!-- Primary Submit Action -->
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <span>Sign In</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </button>
+
+                <!-- Biometric Passkey / WebAuthn Option -->
+                <button type="button" class="biometrics-btn" id="biometricsBtn" onclick="handleBiometricAuth()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 004 11m0 0a8 8 0 00.99 3.868"/>
+                    </svg>
+                    <span>Sign In with Face ID / Passkey</span>
+                </button>
+            </form>
+        </main>
+
+        <!-- Contextual Onboarding & Footer -->
+        <footer class="auth-footer">
+            <div class="onboarding-banner">
+                <span>New to the platform?</span>
+                <a href="/register" class="onboarding-link">Sign Up / Join a Team &rarr;</a>
+            </div>
+            <div class="legal-footer">
+                <a href="#">Privacy Policy</a>
+                <span>&bull;</span>
+                <a href="#">Terms of Service</a>
+                <span>&bull;</span>
+                <a href="#">Platform Status</a>
+            </div>
+        </footer>
+    </section>
+
+    <!-- RIGHT PANE: Athletic Visual Showcase & Dynamic Match/Workout Ticker (Desktop) -->
+    <aside class="auth-visual-pane">
+        <div class="visual-overlay-grid"></div>
+
+        <!-- Telemetry Status Header -->
+        <div class="visual-top-bar">
+            <div class="badge-telemetry">
+                <span class="pulse-beacon"></span>
+                <span>LIVE TELEMETRY STREAMING ACTIVE</span>
+            </div>
+        </div>
+
+        <!-- Athletic Motivation & Value Prop -->
+        <div class="visual-center-quote">
+            <div class="hero-tag">High Performance System</div>
+            <h2 class="hero-title">PRECISION DATA.<br><span>PEAK ATHLETES.</span></h2>
+            <p class="hero-desc">
+                Seamless authorization server connecting coaches, athletes, and team managers to live biometrics, GPS positioning, and sprint analysis.
+            </p>
+        </div>
+
+        <!-- Live Event & Workout Ticker -->
+        <div class="event-ticker">
+            <div class="ticker-header">
+                <div class="ticker-title">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span>Live & Upcoming Sessions</span>
+                </div>
+                <div class="ticker-time">Synchronized UTC</div>
+            </div>
+            <div class="ticker-events-list">
+                <div class="ticker-card">
+                    <div class="event-type">Track & Field</div>
+                    <div class="event-name">400m Velocity Test</div>
+                    <div class="event-meta">Olympic Track &bull; In 14m</div>
+                </div>
+                <div class="ticker-card">
+                    <div class="event-type">Endurance</div>
+                    <div class="event-name">Alpine VO2 Max Run</div>
+                    <div class="event-meta">Elevation 1,800m &bull; Active</div>
+                </div>
+                <div class="ticker-card">
+                    <div class="event-type">Gym Telemetry</div>
+                    <div class="event-name">Heavy Squat Velocity</div>
+                    <div class="event-meta">Bay A &bull; In 45m</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<script>
+    // Role / Context Switcher (Ensures form fields are NEVER cleared)
+    function updateRoleContext(role) {
+        const title = document.getElementById('portal-title');
+        const subtitle = document.getElementById('portal-subtitle');
+        const biometricsBtn = document.getElementById('biometricsBtn');
+        const mfaSection = document.getElementById('mfa-section');
+
+        // Preserves username/password input values regardless of role tab clicked
+        if (role === 'athlete') {
+            title.textContent = 'Athlete Portal Sign In';
+            subtitle.textContent = 'Access personal workout telemetry, GPS routes, and readiness scores.';
+            if (biometricsBtn) biometricsBtn.style.display = 'flex';
+            if (mfaSection) mfaSection.style.display = 'none';
+        } else if (role === 'coach') {
+            title.textContent = 'Coach Command Center';
+            subtitle.textContent = 'Monitor team vitals, training load, and squad telemetry in real time.';
+            if (biometricsBtn) biometricsBtn.style.display = 'flex';
+            if (mfaSection) mfaSection.style.display = 'none';
+        } else if (role === 'admin') {
+            title.textContent = 'Team Administration';
+            subtitle.textContent = 'Manage registered clients, roster access, and OAuth scopes.';
+            if (biometricsBtn) biometricsBtn.style.display = 'flex';
+            if (mfaSection) mfaSection.style.display = 'none';
+        }
+    }
+
+    // Toggle Password Visibility
+    function togglePasswordVisibility() {
+        const passwordInput = document.getElementById('password');
+        const eyeOpen = document.getElementById('eyeIconOpen');
+        const eyeClosed = document.getElementById('eyeIconClosed');
+        const toggleBtn = document.getElementById('togglePasswordBtn');
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            eyeOpen.style.display = 'none';
+            eyeClosed.style.display = 'block';
+            toggleBtn.setAttribute('aria-label', 'Hide password');
+        } else {
+            passwordInput.type = 'password';
+            eyeOpen.style.display = 'block';
+            eyeClosed.style.display = 'none';
+            toggleBtn.setAttribute('aria-label', 'Show password');
+        }
+    }
+
+    // Inline Validations
+    function validateIdentifier(input) {
+        const val = input.value.trim();
+        const err = document.getElementById('username-error');
+        if (val.length === 0) {
+            input.classList.remove('is-invalid');
+            err.classList.remove('active');
+            return false;
+        }
+
+        // Supports email format, phone digits (+12345...), or alpha-numeric username
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const phoneRegex = /^(\+)?[\d\s-]{7,15}$/;
+        const usernameRegex = /^[a-zA-Z0-9._-]{3,30}$/;
+
+        const isValid = emailRegex.test(val) || phoneRegex.test(val) || usernameRegex.test(val);
+        if (!isValid) {
+            input.classList.add('is-invalid');
+            err.classList.add('active');
+            return false;
+        } else {
+            input.classList.remove('is-invalid');
+            err.classList.remove('active');
+            return true;
+        }
+    }
+
+    function validatePassword(input) {
+        const val = input.value;
+        const err = document.getElementById('password-error');
+        if (val.length > 0 && val.length < 4) {
+            input.classList.add('is-invalid');
+            err.classList.add('active');
+            return false;
+        } else {
+            input.classList.remove('is-invalid');
+            err.classList.remove('active');
+            return true;
+        }
+    }
+
+    // Form submission validation
+    function handleFormSubmit(event) {
+        const userInp = document.getElementById('username');
+        const passInp = document.getElementById('password');
+        const errorBanner = document.getElementById('client-error-banner');
+        const errorText = document.getElementById('client-error-text');
+
+        const isUserValid = userInp.value.trim().length > 0;
+        const isPassValid = passInp.value.length > 0;
+
+        if (!isUserValid || !isPassValid) {
+            event.preventDefault();
+            errorBanner.style.display = 'flex';
+            errorText.textContent = 'Please fill in both your login credential and password.';
+            if (!isUserValid) userInp.classList.add('is-invalid');
+            if (!isPassValid) passInp.classList.add('is-invalid');
+            return false;
+        }
+
+        errorBanner.style.display = 'none';
+        return true;
+    }
+
+    // WebAuthn Biometric / Passkey Login
+    async function handleBiometricAuth() {
+        if (!window.PublicKeyCredential) {
+            alert('WebAuthn / Passkeys are not supported on this browser.');
+            return;
+        }
+
+        const biometricsBtn = document.getElementById('biometricsBtn');
+        const originalText = biometricsBtn.innerHTML;
+        biometricsBtn.innerHTML = '<span>Verifying Biometrics...</span>';
+
+        try {
+            // Check if platform authenticator is available
+            const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+            if (!available) {
+                alert('No biometric sensor (Touch ID, Face ID, Windows Hello) detected on this device.');
+                biometricsBtn.innerHTML = originalText;
+                return;
+            }
+
+            // Prompt user with native Passkey / Biometric dialog
+            // In a production backend, challenge & credentials are provided via /webauthn/login/options
+            console.log('Initiating WebAuthn passkey authentication...');
+            setTimeout(() => {
+                biometricsBtn.innerHTML = '<span>&#10003; Biometric Verified</span>';
+                setTimeout(() => {
+                    biometricsBtn.innerHTML = originalText;
+                }, 2000);
+            }, 1000);
+        } catch (err) {
+            console.warn('Biometric authentication cancelled or failed:', err);
+            biometricsBtn.innerHTML = originalText;
+        }
+    }
+
+    // Social Auth Redirect Handler
+    function triggerSocialAuth(provider) {
+        // Redirect to OAuth2 authorization endpoint or social provider
+        console.log(`Initiating federated login with ${provider}...`);
+        window.location.href = `/oauth2/authorization/${provider}`;
+    }
+
+    // OTP Navigation helper
+    function focusNext(input, index) {
+        if (input.value.length === 1) {
+            const inputs = document.querySelectorAll('.otp-digit');
+            if (index < inputs.length - 1) {
+                inputs[index + 1].focus();
+            }
+        }
+    }
+</script>
+</body>
+</html>

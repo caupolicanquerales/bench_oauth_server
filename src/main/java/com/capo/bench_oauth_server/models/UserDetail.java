@@ -28,7 +28,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class UserDetail {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -56,7 +56,7 @@ public class User {
 	
 
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Roles> roles = new HashSet<>();
+    private Set<Roles> roles;
 	
 	@PrePersist
     protected void onCreate() {

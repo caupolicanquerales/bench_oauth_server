@@ -6,8 +6,6 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -17,7 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name= "oauth2_registered_clients")
+@Table(name= "oauth2_registered_client")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -25,11 +23,11 @@ import lombok.Setter;
 @Builder
 public class OAuth2RegisteredClient {
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Column(length = 100)
+    private String id;
 	
-	@Column(nullable = false, unique= true)
-	private String cliendId;
+	@Column(name= "client_id",nullable = false, unique= true)
+	private String clientId;
 	
 	@CreationTimestamp
     @Column(
@@ -38,9 +36,9 @@ public class OAuth2RegisteredClient {
         updatable = false, 
         columnDefinition = "TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"
     )
-	private Instant clientIdIssueAt;
+	private Instant clientIdIssuedAt;
 	
-	@Column(nullable = true)
+	@Column(name= "client_secret", nullable = true)
 	private String clientSecret;
 	
 	@CreationTimestamp
@@ -51,28 +49,28 @@ public class OAuth2RegisteredClient {
     )
 	private Instant clientSecretExpiresAt;
 	
-	@Column(nullable = false)
+	@Column(name="client_name", nullable = false)
 	private String clientName;
 	
-	@Column(nullable = false)
+	@Column(name="client_authentication_methods", nullable = false)
 	private String clientAuthenticationMethods;
 	
-	@Column(nullable = false)
+	@Column(name="authorization_grant_types", nullable = false)
 	private String authorizationGrantTypes;
 	
-	@Column(nullable = true)
+	@Column(name="redirect_uris", nullable = true)
 	private String redirectUris;
 	
-	@Column(nullable = true)
+	@Column(name="logout_redirect_uris", nullable = true)
 	private String logoutRedirectUris;
 	
-	@Column(nullable = false)
+	@Column(name="scopes", nullable = false)
 	private String scopes;
 	
-	@Column(nullable = false)
+	@Column(name="client_settings",nullable = false)
 	private String clientSettings;
 	
-	@Column(nullable = false)
+	@Column(name="token_settings", nullable = false)
 	private String tokenSettings;
 	 
 }
