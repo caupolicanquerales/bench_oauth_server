@@ -63,24 +63,25 @@ public class SecurityConfig {
                 new OAuth2AuthorizationServerConfigurer();
 
         http
-            .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
-            .with(authorizationServerConfigurer, authorizationServer ->
-                authorizationServer.oidc(Customizer.withDefaults())
-            )
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/.well-known/**", "/oauth2/jwks").permitAll()
-                .anyRequest().authenticated()
-            )
-            .exceptionHandling(exceptions -> exceptions
-                .defaultAuthenticationEntryPointFor(
-                    new LoginUrlAuthenticationEntryPoint("/login"),
-                    new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
-                )
-            )
-            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
-
-        return http.build();
+	        .securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
+	        .with(authorizationServerConfigurer, authorizationServer ->
+	            authorizationServer
+	                .oidc(Customizer.withDefaults()) // Enables OIDC discovery & endpoints
+	        )
+	        .authorizeHttpRequests(authorize ->
+	            authorize
+	                .anyRequest().authenticated()
+	        )
+	        .exceptionHandling(exceptions -> exceptions
+	            .defaultAuthenticationEntryPointFor(
+	                new LoginUrlAuthenticationEntryPoint("/login"),
+	                new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
+	            )
+	        )
+	        .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+	        .cors(cors -> cors.configurationSource(corsConfigurationSource()));
+	
+	    return http.build();
     }
 
     @Bean
