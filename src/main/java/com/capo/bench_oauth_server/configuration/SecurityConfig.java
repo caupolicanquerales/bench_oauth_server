@@ -5,6 +5,7 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -36,12 +37,24 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Value("${app.auth.issuer:http://localhost:8082}")
+    private String issuerUri;
+
+    @Value("${app.frontend.url:http://localhost:4200}")
+    private String frontendUrl;
+
+    @Value("${app.cors.allowed-origins:http://localhost:4200,http://localhost:8082}")
+    private String corsAllowedOrigins;
 
     @Bean
     @Order(1)
@@ -91,7 +104,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:4200", "http://localhost:8082"));
+        List<String> origins = Arrays.stream(corsAllowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+        config.setAllowedOrigins(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
@@ -103,23 +120,36 @@ public class SecurityConfig {
 
     @Bean
     public RegisteredClientRepository registeredClientRepository() {
-        RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
+        Set<String> redirectUris = new LinkedHashSet<>();
+        // Default local redirect URIs always supported
+        redirectUris.add("http://localhost:4200/login-callback");
+        redirectUris.add("http://localhost:4200");
+        
+        // Dynamically configured frontend URL (e.g., Render frontend)
+        if (frontendUrl != null && !frontendUrl.isBlank()) {
+            String trimmedFrontend = frontendUrl.trim().replaceAll("/+$", "");
+            redirectUris.add(trimmedFrontend);
+            redirectUris.add(trimmedFrontend + "/login-callback");
+        }
+
+        RegisteredClient.Builder builder = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId("my-angular-client")
                 .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                .redirectUri("http://localhost:4200/login-callback")
-                .redirectUri("http://localhost:4200")
-                .postLogoutRedirectUri("http://localhost:4200")
                 .scope(OidcScopes.OPENID)
                 .scope(OidcScopes.PROFILE)
                 .clientSettings(ClientSettings.builder()
                         .requireProofKey(true)
                         .requireAuthorizationConsent(false)
-                        .build())
-                .build();
+                        .build());
 
-        return new InMemoryRegisteredClientRepository(registeredClient);
+        for (String uri : redirectUris) {
+            builder.redirectUri(uri);
+            builder.postLogoutRedirectUri(uri);
+        }
+
+        return new InMemoryRegisteredClientRepository(builder.build());
     }
 
     @Bean
@@ -153,7 +183,7 @@ public class SecurityConfig {
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
         return AuthorizationServerSettings.builder()
-                .issuer("http://localhost:8082") // Must match Gateway URL
+                .issuer(issuerUri)
                 .build();
     }
 

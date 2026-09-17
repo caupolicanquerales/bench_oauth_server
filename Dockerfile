@@ -19,10 +19,12 @@ WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 USER appuser:appgroup
 
-# Copy built artifact from builder stage
-COPY --from=builder /app/target/*.jar app.jar
+# Copy built artifact from builder stage with correct non-root ownership
+COPY --chown=appuser:appgroup --from=builder /app/target/*.jar app.jar
 
 # Server port configuration (matches application.yml default 8083)
 EXPOSE 8083
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENV JAVA_OPTS="-XX:MaxRAMPercentage=75.0 -XX:InitialRAMPercentage=50.0 -XX:+UseG1GC"
+
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]
