@@ -5,7 +5,7 @@ server:
 
 app:
   auth:
-    issuer: ${ISSUER_URI:${AUTH_SERVER_ISSUER:http://localhost:8082}}
+    issuer: ${ISSUER_URI:${AUTH_SERVER_ISSUER:http://localhost:8083}}
   frontend:
     url: ${FRONTEND_URL:http://localhost:4200}
   cors:
@@ -23,6 +23,17 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+logging:
+  pattern:
+    console: "${LOG_PATTERN_CONSOLE:%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n}"
+  level:
+    root: ${LOGGING_LEVEL_ROOT:INFO}
+    com.capo.bench_oauth_server: ${LOGGING_LEVEL_APP:INFO}
+    org.springframework.security: ${LOGGING_LEVEL_SECURITY:INFO}
+    org.springframework.security.oauth2: ${LOGGING_LEVEL_OAUTH2:INFO}
+    org.springframework.web: ${LOGGING_LEVEL_WEB:INFO}
+    org.hibernate.SQL: ${LOGGING_LEVEL_SQL:WARN}
 
 ---
 # ------------------------------------------------------------------
@@ -50,10 +61,8 @@ spring:
     activate:
       on-profile: render
   datasource:
-    # Set these in Render Dashboard -> Environment Variables:
-    # SPRING_DATASOURCE_URL, DB_USER, DB_PASSWORD
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://dpg-dak3ev142hec73bsfij0-a/dbbenchauth}
     username: ${DB_USER:dbbenchauth_user}
-    password: ${DB_PASSWORD:gGzvIUNPR2gy7QGTvC4vHUIBSl40AP8i}
+    password: ${DB_PASSWORD:}
     driver-class-name: org.postgresql.Driver
 

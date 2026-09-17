@@ -47,7 +47,7 @@ import java.util.UUID;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${app.auth.issuer:http://localhost:8082}")
+    @Value("${app.auth.issuer:http://localhost:8083}")
     private String issuerUri;
 
     @Value("${app.frontend.url:http://localhost:4200}")
