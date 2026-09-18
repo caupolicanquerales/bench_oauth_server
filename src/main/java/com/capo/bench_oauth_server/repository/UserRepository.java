@@ -10,4 +10,5 @@ import com.capo.bench_oauth_server.models.UserDetail;
 @Repository
 public interface UserRepository extends JpaRepository<UserDetail, Long>{
 	Optional<UserDetail> findByUsername(String username);
+	Optional<UserDetail> findByEmail(String email);
 }
