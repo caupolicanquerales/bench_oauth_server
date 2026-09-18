@@ -9,7 +9,7 @@ app:
   frontend:
     url: ${FRONTEND_URL:http://localhost:4200}
   cors:
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:8082}
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:8082,https://bench-frontend.onrender.com,https://bench-api-gateway.onrender.com}
 
 spring:
   application:
@@ -55,6 +55,12 @@ spring:
 # ------------------------------------------------------------------
 server:
   port: ${PORT:8083} # Render injects PORT dynamically
+
+app:
+  auth:
+    issuer: ${ISSUER_URI:${AUTH_SERVER_ISSUER:https://bench-api-gateway.onrender.com}}
+  frontend:
+    url: ${FRONTEND_URL:https://bench-frontend.onrender.com}
 
 spring:
   config:

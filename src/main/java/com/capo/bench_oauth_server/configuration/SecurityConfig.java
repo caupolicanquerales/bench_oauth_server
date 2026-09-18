@@ -53,7 +53,7 @@ public class SecurityConfig {
     @Value("${app.frontend.url:http://localhost:4200}")
     private String frontendUrl;
 
-    @Value("${app.cors.allowed-origins:http://localhost:4200,http://localhost:8082}")
+    @Value("${app.cors.allowed-origins:http://localhost:4200,http://localhost:8082,https://bench-frontend.onrender.com,https://bench-api-gateway.onrender.com}")
     private String corsAllowedOrigins;
 
     @Bean
@@ -109,7 +109,10 @@ public class SecurityConfig {
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .toList();
-        config.setAllowedOrigins(origins);
+        config.setAllowedOriginPatterns(List.of("http://localhost:*", "https://*.onrender.com"));
+        for (String origin : origins) {
+            config.addAllowedOrigin(origin);
+        }
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
