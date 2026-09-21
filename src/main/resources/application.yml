@@ -69,7 +69,7 @@ server:
 
 app:
   auth:
-    issuer: ${ISSUER_URI:${AUTH_SERVER_ISSUER:https://bench-oauth-server.onrender.com}}
+    issuer: ${ISSUER_URI:${AUTH_SERVER_ISSUER:https://bench-api-gateway.onrender.com}}
   frontend:
     url: ${FRONTEND_URL:https://bench-frontend.onrender.com}
 
