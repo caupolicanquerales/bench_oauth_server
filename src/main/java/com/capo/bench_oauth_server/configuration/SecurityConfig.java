@@ -31,17 +31,23 @@ import org.springframework.security.oauth2.server.authorization.settings.ClientS
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
-import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.KeyFactory;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -59,6 +65,15 @@ public class SecurityConfig {
 
     @Value("${app.cors.allowed-origins:http://localhost:4200,http://localhost:8082,https://bench-frontend.onrender.com,https://bench-api-gateway.onrender.com}")
     private String corsAllowedOrigins;
+
+    @Value("${app.auth.rsa.key-id:bench-oauth-key-1}")
+    private String rsaKeyId;
+
+    @Value("${app.auth.rsa.public-key:}")
+    private String rsaPublicKeyPem;
+
+    @Value("${app.auth.rsa.private-key:}")
+    private String rsaPrivateKeyPem;
     
     private final UserDetailsService userDetailsService;
     
@@ -98,7 +113,6 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
         HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
-        requestCache.setRequestMatcher(PathPatternRequestMatcher.withDefaults().matcher("/oauth2/authorize"));
 
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -118,7 +132,10 @@ public class SecurityConfig {
                 .permitAll()
             )
             .logout(logout -> logout
-                .logoutUrl("/logout")
+                .logoutRequestMatcher(new OrRequestMatcher(
+                    PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/logout"),
+                    PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/logout")
+                ))
                 .logoutSuccessUrl("/login?logout=true")
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
@@ -188,15 +205,56 @@ public class SecurityConfig {
 
     @Bean
     public JWKSource jwkSource() {
+        RSAKey rsaKey = loadOrGenerateRsaKey();
+        JWKSet jwkSet = new JWKSet(rsaKey);
+        return new ImmutableJWKSet<>(jwkSet);
+    }
+
+    private RSAKey loadOrGenerateRsaKey() {
+        if (rsaPublicKeyPem != null && !rsaPublicKeyPem.isBlank() &&
+            rsaPrivateKeyPem != null && !rsaPrivateKeyPem.isBlank()) {
+            try {
+                RSAPublicKey publicKey = parsePublicKey(rsaPublicKeyPem);
+                RSAPrivateKey privateKey = parsePrivateKey(rsaPrivateKeyPem);
+                return new RSAKey.Builder(publicKey)
+                        .privateKey(privateKey)
+                        .keyID(rsaKeyId)
+                        .build();
+            } catch (Exception ex) {
+                throw new IllegalStateException("Failed to load RSA key pair from configuration", ex);
+            }
+        }
+
+        // Fallback for local development or when environment variables are not configured
         KeyPair keyPair = generateRsaKey();
         RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
         RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-        RSAKey rsaKey = new RSAKey.Builder(publicKey)
+        return new RSAKey.Builder(publicKey)
                 .privateKey(privateKey)
-                .keyID(UUID.randomUUID().toString())
+                .keyID(rsaKeyId != null && !rsaKeyId.isBlank() ? rsaKeyId : UUID.randomUUID().toString())
                 .build();
-        JWKSet jwkSet = new JWKSet(rsaKey);
-        return new ImmutableJWKSet<>(jwkSet);
+    }
+
+    private static RSAPublicKey parsePublicKey(String keyPem) throws Exception {
+        String cleanPem = keyPem
+                .replace("-----BEGIN PUBLIC KEY-----", "")
+                .replace("-----END PUBLIC KEY-----", "")
+                .replaceAll("\\s+", "");
+        byte[] decoded = Base64.getDecoder().decode(cleanPem);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        return (RSAPublicKey) keyFactory.generatePublic(new X509EncodedKeySpec(decoded));
+    }
+
+    private static RSAPrivateKey parsePrivateKey(String keyPem) throws Exception {
+        String cleanPem = keyPem
+                .replace("-----BEGIN PRIVATE KEY-----", "")
+                .replace("-----END PRIVATE KEY-----", "")
+                .replace("-----BEGIN RSA PRIVATE KEY-----", "")
+                .replace("-----END RSA PRIVATE KEY-----", "")
+                .replaceAll("\\s+", "");
+        byte[] decoded = Base64.getDecoder().decode(cleanPem);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        return (RSAPrivateKey) keyFactory.generatePrivate(new PKCS8EncodedKeySpec(decoded));
     }
 
     private static KeyPair generateRsaKey() {

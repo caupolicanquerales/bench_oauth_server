@@ -6,6 +6,10 @@ server:
 app:
   auth:
     issuer: ${ISSUER_URI:${AUTH_SERVER_ISSUER:http://localhost:8082}}
+    rsa:
+      key-id: ${RSA_KEY_ID:bench-oauth-key-1}
+      public-key: ${RSA_PUBLIC_KEY:}
+      private-key: ${RSA_PRIVATE_KEY:}
   frontend:
     url: ${FRONTEND_URL:http://localhost:4200}
   cors:
@@ -55,6 +59,7 @@ spring:
 # ------------------------------------------------------------------
 server:
   port: ${PORT:8083} # Render injects PORT dynamically
+  forward-headers-strategy: framework
   servlet:
     session:
       cookie:
@@ -64,7 +69,7 @@ server:
 
 app:
   auth:
-    issuer: ${ISSUER_URI:${AUTH_SERVER_ISSUER:https://bench-api-gateway.onrender.com}}
+    issuer: ${ISSUER_URI:${AUTH_SERVER_ISSUER:https://bench-oauth-server.onrender.com}}
   frontend:
     url: ${FRONTEND_URL:https://bench-frontend.onrender.com}
 
