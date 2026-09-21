@@ -1,5 +1,6 @@
 package com.capo.bench_oauth_server.configuration;
 
+import com.capo.bench_oauth_server.interfaces.UserDetailsService;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
@@ -10,6 +11,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -28,6 +30,8 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -55,7 +59,13 @@ public class SecurityConfig {
 
     @Value("${app.cors.allowed-origins:http://localhost:4200,http://localhost:8082,https://bench-frontend.onrender.com,https://bench-api-gateway.onrender.com}")
     private String corsAllowedOrigins;
-
+    
+    private final UserDetailsService userDetailsService;
+    
+    public SecurityConfig(UserDetailsService userDetailsService) {
+    	this.userDetailsService= userDetailsService;
+	}
+    
     @Bean
     @Order(1)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -87,15 +97,24 @@ public class SecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
+        HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
+        requestCache.setRequestMatcher(PathPatternRequestMatcher.withDefaults().matcher("/oauth2/authorize"));
+
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.ignoringRequestMatchers("/register", "/logout"))
+            .csrf(csrf -> csrf.ignoringRequestMatchers("/logout"))
+            .requestCache(cache -> cache.requestCache(requestCache))
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/login", "/register", "/logout", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
+                .requestMatchers("/", "/login", "/register", "/logout", "/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico", "/error", "/.well-known/**").permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
                 .loginPage("/login")
+                .loginProcessingUrl("/login")      
+                .usernameParameter("username")     
+                .passwordParameter("password")     
+                .defaultSuccessUrl("/", false)
+                .failureUrl("/login?error=true")
                 .permitAll()
             )
             .logout(logout -> logout
@@ -117,10 +136,9 @@ public class SecurityConfig {
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .toList();
-        config.setAllowedOriginPatterns(List.of("http://localhost:*", "https://*.onrender.com"));
-        for (String origin : origins) {
-            config.addAllowedOrigin(origin);
-        }
+
+        // Use allowedOriginPatterns exclusively when allowCredentials is true
+        config.setAllowedOriginPatterns(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
@@ -134,13 +152,17 @@ public class SecurityConfig {
     public RegisteredClientRepository registeredClientRepository() {
         Set<String> redirectUris = new LinkedHashSet<>();
         // Default local redirect URIs always supported
-        redirectUris.add("http://localhost:4200/login-callback");
         redirectUris.add("http://localhost:4200");
+        redirectUris.add("http://localhost:4200/dashboard");
+        redirectUris.add("http://localhost:4200/oauth2/callback");
+        redirectUris.add("http://localhost:4200/login-callback");
         
         // Dynamically configured frontend URL (e.g., Render frontend)
         if (frontendUrl != null && !frontendUrl.isBlank()) {
             String trimmedFrontend = frontendUrl.trim().replaceAll("/+$", "");
             redirectUris.add(trimmedFrontend);
+            redirectUris.add(trimmedFrontend + "/dashboard");
+            redirectUris.add(trimmedFrontend + "/oauth2/callback");
             redirectUris.add(trimmedFrontend + "/login-callback");
         }
 
@@ -202,5 +224,12 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+    
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
     }
 }

@@ -26,20 +26,20 @@ public class LoginServiceImpl implements LoginService {
     }
     
     @Override
-	public String validationProcessRegister(String email, String password, String confirmPassword, String portalRole) {
+	public String validationProcessRegister(String email, String password, String confirmPassword, String fullName, String portalRole) {
 		if (password == null || password.length() < 6) {
-            return "redirect:/login?mode=register&reg_error=Password+must+be+at+least+6+characters";
+            return "redirect:/register?reg_error=Password+must+be+at+least+6+characters";
         }
         if (confirmPassword != null && !password.equals(confirmPassword)) {
-            return "redirect:/login?mode=register&reg_error=Passwords+do+not+match";
+            return "redirect:/register?reg_error=Passwords+do+not+match";
         }
         if (email == null || !email.contains("@")) {
-            return "redirect:/login?mode=register&reg_error=Please+provide+a+valid+email+address";
+            return "redirect:/register?reg_error=Please+provide+a+valid+email+address";
         }
 
         String username = email.trim();
         if (userRepository.findByUsername(username).isPresent() || userRepository.findByEmail(username).isPresent()) {
-            return "redirect:/login?mode=register&reg_error=An+account+with+this+email+already+exists";
+            return "redirect:/register?reg_error=An+account+with+this+email+already+exists";
         }
 
         RolesEnum roleEnum = RolesEnum.fromString(portalRole);
@@ -47,6 +47,7 @@ public class LoginServiceImpl implements LoginService {
         UserDetail newUser = UserDetail.builder()
                 .username(username)
                 .email(username)
+                .fullName(fullName != null && !fullName.isBlank() ? fullName.trim() : null)
                 .password(passwordEncoder.encode(password))
                 .enable(true)
                 .build();

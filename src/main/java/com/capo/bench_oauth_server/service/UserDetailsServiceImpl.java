@@ -24,21 +24,22 @@ public class UserDetailsServiceImpl implements UserDetailsService{
 	}
 
 	@Override
-	@Transactional(readOnly = true)
-	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		UserDetail user= userRepository.findByUsername(username)
-				.orElseThrow(()->  new UsernameNotFoundException("User not found with username: " + username));
-		List<GrantedAuthority> authorities = (user.getRoles() == null)
-				? List.of()
-				: user.getRoles().stream()
-						.map(role -> new SimpleGrantedAuthority(role.getRole()))
-						.collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
+        UserDetail user = userRepository.findByUsernameOrEmail(identifier)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username or email: " + identifier));
 
-	    return new org.springframework.security.core.userdetails.User(
-	            user.getUsername(),
-	            user.getPassword(),
-	            user.getEnable(),
-	            true, true, true,
-	            authorities);
-	}
+        List<GrantedAuthority> authorities = (user.getRoles() == null)
+                ? List.of()
+                : user.getRoles().stream()
+                        .map(role -> new SimpleGrantedAuthority(role.getRole()))
+                        .collect(Collectors.toList());
+
+        return new org.springframework.security.core.userdetails.User(
+                user.getUsername(),
+                user.getPassword(),
+                user.getEnable(),
+                true, true, true,
+                authorities);
+    }
 }

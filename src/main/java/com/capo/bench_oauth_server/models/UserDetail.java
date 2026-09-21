@@ -41,7 +41,11 @@ public class UserDetail {
 	
 	@Column(nullable = false, unique= true)
 	private String email;
+
+	@Column(name = "full_name")
+	private String fullName;
 	
+	@Builder.Default
 	@Column(nullable= false, columnDefinition= "BOOLEAN DEFAULT TRUE")
 	private Boolean enable= Boolean.TRUE;
 	
