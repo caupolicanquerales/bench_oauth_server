@@ -1,5 +1,11 @@
 package com.capo.bench_oauth_server.interfaces;
 
+import org.springframework.security.core.Authentication;
+
+import com.capo.bench_oauth_server.dto.RegistrationRequest;
+
 public interface LoginService {
-	String validationProcessRegister(String email, String password, String confirmPassword, String fullName, String portalRole);
+	String register(RegistrationRequest registrationRequest);
+	String resolveRootView(Authentication authentication);
+	String resolveLoginView(Authentication authentication);
 }
