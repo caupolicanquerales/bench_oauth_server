@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.capo.bench_oauth_server.interfaces.UserDetailsService;
 import com.capo.bench_oauth_server.models.UserDetail;
 import com.capo.bench_oauth_server.repository.UserRepository;
+import com.capo.bench_oauth_server.security.AuthenticatedUser;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService{
@@ -35,11 +36,12 @@ public class UserDetailsServiceImpl implements UserDetailsService{
                         .map(role -> new SimpleGrantedAuthority(role.getRole()))
                         .collect(Collectors.toList());
 
-        return new org.springframework.security.core.userdetails.User(
+        return new AuthenticatedUser(
+                user.getId(),
                 user.getUsername(),
                 user.getPassword(),
-                user.getEnable(),
-                true, true, true,
-                authorities);
+                authorities,
+                user.getEnable() != null ? user.getEnable() : true
+        );
     }
 }
